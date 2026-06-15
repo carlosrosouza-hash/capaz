@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capacidade de Processo v4 — Cp e Cpk</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07080e;
+    --surface: #0b0d1a;
+    --surface2: #101327;
+    --surface3: #161930;
+    --border: #1c2038;
+    --border-bright: #272c48;
+    --text: #eef0ff;
+    --text-muted: #8890b8;
+    --text-dim: #2e3556;
+    --accent: #f97316;
+    --accent2: #a78bfa;
+    --accent-dim: rgba(249,115,22,0.1);
+    --accent2-dim: rgba(167,139,250,0.1);
+    --red:   #f43f5e;
+    --amber: #f59e0b;
+    --green: #34d399;
+    --lime:  #a3e635;
+    --red-dim:   rgba(244,63,94,0.12);
+    --amber-dim: rgba(245,158,11,0.12);
+    --green-dim: rgba(52,211,153,0.12);
+    --lime-dim:  rgba(163,230,53,0.12);
+  }
+
+  body.light-mode {
+    --bg: #d4dbe8;
+    --surface: #e0e7f4;
+    --surface2: #cdd5e6;
+    --surface3: #c2ccde;
+    --border: #aab6ce;
+    --border-bright: #7a8faf;
+    --text: #0e1030;
+    --text-muted: #3e4474;
+    --text-dim: #7e90aa;
+    --accent: #d45f00;
+    --accent2: #5b21b6;
+    --accent-dim: rgba(212,95,0,0.12);
+    --accent2-dim: rgba(91,33,182,0.12);
+    --red-dim:   rgba(244,63,94,0.15);
+    --amber-dim: rgba(245,158,11,0.15);
+    --green-dim: rgba(52,211,153,0.15);
+    --lime-dim:  rgba(163,230,53,0.15);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Figtree', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    background-image: radial-gradient(circle, rgba(249,115,22,0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-attachment: fixed;
+  }
+
+  body.light-mode {
+    background-image: radial-gradient(circle, rgba(160,166,208,0.35) 1px, transparent 1px);
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: rgba(7,8,14,0.93);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px; height: 58px;
+    display: flex; align-items: center; gap: 16px;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(20px);
+  }
+
+  body.light-mode header { background: rgba(212,219,232,0.95); }
+
+  .logo-group { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+
+  .logo-hex {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-size: 16.5px; font-weight: 800;
+    color: #fff; flex-shrink: 0;
+  }
+
+  .logo-text h1 {
+    font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800;
+    color: var(--text); line-height: 1; letter-spacing: -0.3px;
+  }
+
+  .logo-text p { font-size: 15px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.4px; margin-top: 1px; }
+
+  .logo-prof {
+    display: none;
+    font-size: 13px; font-weight: 500; font-style: italic;
+    color: var(--text-muted); letter-spacing: 0.4px; margin-top: 1px;
+  }
+
+  .header-sep { width: 1px; height: 24px; background: var(--border); flex-shrink: 0; }
+
+  .header-tag {
+    font-family: 'JetBrains Mono', monospace; font-size: 14.5px;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--accent); background: var(--accent-dim);
+    border: 1px solid rgba(249,115,22,0.25); padding: 3px 9px; border-radius: 4px;
+  }
+
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .professor-tag { font-size: 18px; color: var(--text-muted); font-style: italic; font-weight: 500; }
+
+  .btn-theme {
+    background: transparent; color: var(--text-muted);
+    border: 1px solid var(--border-bright);
+    font-family: 'JetBrains Mono', monospace; font-size: 14.5px;
+    letter-spacing: 1px; padding: 5px 12px; text-transform: uppercase;
+    cursor: pointer; border-radius: 4px; transition: all 0.15s;
+  }
+
+  .btn-theme:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+  @media (max-width: 600px) {
+    header { padding: 0 14px; gap: 10px; }
+    .header-sep    { display: none; }
+    .header-tag    { display: none; }
+    .professor-tag { display: none; }
+    .logo-text h1  { font-size: 13px; }
+    .logo-text p   { font-size: 11.5px; letter-spacing: 0.2px; }
+    .logo-prof     { display: block; }
+  }
+
+  /* ── LAYOUT ── */
+  main {
+    max-width: 1160px; margin: 0 auto;
+    padding: 24px 20px 60px;
+    display: grid; grid-template-columns: 340px 1fr;
+    gap: 18px; align-items: start;
+  }
+
+  @media (max-width: 800px) {
+    main { grid-template-columns: 1fr; padding: 18px 14px 60px; }
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif; font-size: 16.5px; font-weight: 700;
+    letter-spacing: 2.5px; text-transform: uppercase; color: var(--accent);
+    margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+  }
+
+  .card-title::before {
+    content: ''; width: 4px; height: 16px;
+    background: var(--accent); border-radius: 2px; flex-shrink: 0;
+  }
+
+  /* ── TOGGLES ── */
+  .toggle-bar {
+    display: flex; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 7px;
+    padding: 3px; margin-bottom: 18px; gap: 3px;
+  }
+
+  .toggle-btn {
+    flex: 1; background: transparent; border: none;
+    color: var(--text-muted); font-family: 'Figtree', sans-serif;
+    font-size: 18px; font-weight: 600;
+    padding: 7px 10px; border-radius: 5px;
+    cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+
+  .toggle-btn.active { background: var(--accent); color: #fff; }
+
+  /* ── SECTION LABELS ── */
+  .section-label {
+    font-size: 15px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent2); margin: 14px 0 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .section-label:first-child { margin-top: 0; }
+
+  /* ── INPUTS ── */
+  .field-group { margin-bottom: 10px; }
+
+  label {
+    display: block; font-size: 18px; font-weight: 600;
+    color: var(--text-muted); margin-bottom: 5px; letter-spacing: 0.2px;
+  }
+
+  input {
+    width: 100%; background: var(--surface2);
+    border: 1px solid var(--border); border-bottom: 2px solid var(--border-bright);
+    color: var(--text); font-family: 'JetBrains Mono', monospace;
+    font-size: 19.5px; padding: 9px 11px; border-radius: 6px;
+    outline: none; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  }
+
+  input:focus {
+    border-color: var(--border-bright); border-bottom-color: var(--accent);
+    box-shadow: 0 3px 0 -1px rgba(249,115,22,0.18); background: var(--surface3);
+  }
+
+  input::placeholder { color: var(--text-dim); }
+
+  /* ── TEXTAREA ── */
+  .data-textarea {
+    width: 100%; background: var(--surface2);
+    border: 1px solid var(--border); border-bottom: 2px solid var(--border-bright);
+    color: var(--text); font-family: 'JetBrains Mono', monospace;
+    font-size: 18px; padding: 10px 11px; border-radius: 6px;
+    outline: none; resize: vertical; min-height: 148px; max-height: 320px;
+    transition: border-color 0.15s, background 0.15s;
+    line-height: 1.7;
+  }
+
+  .data-textarea:focus {
+    border-color: var(--border-bright); border-bottom-color: var(--accent);
+    background: var(--surface3);
+  }
+
+  .data-textarea::placeholder { color: var(--text-dim); font-style: italic; line-height: 1.9; }
+
+  .input-hint {
+    font-size: 16.5px; color: var(--text-muted); margin-top: 4px;
+    font-style: italic; line-height: 1.5;
+  }
+
+  .n-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14.5px; font-weight: 700; letter-spacing: 0.5px;
+    color: var(--accent); background: var(--accent-dim);
+    border: 1px solid rgba(249,115,22,0.28);
+    padding: 2px 8px; border-radius: 3px;
+  }
+
+  /* ── LIVE STATS ── */
+  .stats-strip {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 5px; margin-top: 8px;
+  }
+
+  .stat-chip {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 8px; text-align: center;
+  }
+
+  .stat-chip-label {
+    font-size: 13px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--accent2); display: block;
+    margin-bottom: 2px;
+  }
+
+  .stat-chip-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16.5px; font-weight: 700; color: var(--text);
+    display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .warning-small {
+    background: var(--amber-dim); border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 6px; padding: 6px 10px; margin-top: 7px;
+    font-size: 17.5px; color: var(--amber); font-weight: 600;
+  }
+
+  .nc-badge {
+    background: var(--red-dim); border: 1px solid rgba(244,63,94,0.3);
+    border-radius: 6px; padding: 5px 10px; margin-top: 6px;
+    font-size: 17.5px; color: var(--red); font-weight: 600;
+  }
+
+  /* ── SEPARATOR / BUTTONS ── */
+  .separator { height: 1px; background: var(--border); margin: 14px 0; }
+
+  .btn-row { display: flex; gap: 8px; margin-top: 14px; }
+
+  button {
+    cursor: pointer; font-family: 'Figtree', sans-serif; font-weight: 700;
+    border: none; border-radius: 7px; padding: 10px 16px; font-size: 19.5px;
+    transition: all 0.15s; display: flex; align-items: center; gap: 6px;
+  }
+
+  .btn-primary { background: var(--accent); color: #fff; flex: 1; justify-content: center; }
+
+  .btn-primary:hover {
+    background: #fb923c;
+    box-shadow: 0 4px 22px rgba(249,115,22,0.4);
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost {
+    background: transparent; color: var(--text-muted);
+    border: 1px solid var(--border-bright); padding: 9px 14px;
+  }
+
+  .btn-ghost:hover { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+
+  /* ── EXAMPLES ── */
+  .examples-label {
+    font-size: 15px; font-weight: 700; letter-spacing: 1.5px;
+    color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase;
+  }
+
+  .examples-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+
+  .example-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-muted); font-family: 'Figtree', sans-serif;
+    font-size: 17.5px; font-weight: 600;
+    padding: 7px 8px; text-align: center; border-radius: 6px;
+    line-height: 1.3; transition: all 0.15s;
+  }
+
+  .example-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+  /* ── RIGHT COLUMN ── */
+  .right-col { display: flex; flex-direction: column; gap: 14px; }
+
+  /* ── GAUGES ── */
+  .gauges-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+  }
+
+  .gauges-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+  .gauge-wrap {
+    flex: 1; min-width: 200px; max-width: 280px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+
+  .gauge-label-top {
+    font-family: 'Syne', sans-serif; font-size: 16.5px; font-weight: 700;
+    letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-muted);
+  }
+
+  canvas.gauge { width: 100%; display: block; border-radius: 8px; }
+
+  .gauge-bottom { text-align: center; margin-top: -4px; }
+
+  .gauge-big-num {
+    font-family: 'Syne', sans-serif; font-size: 57px; font-weight: 800;
+    line-height: 1; letter-spacing: -1.5px;
+  }
+
+  .gauge-zone-label {
+    font-size: 16.5px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase; margin-top: 3px;
+  }
+
+  /* ── PLACEHOLDER ── */
+  .placeholder-panel {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 14px; padding: 40px;
+    color: var(--text-dim); text-align: center;
+  }
+
+  .placeholder-panel svg { opacity: 0.2; }
+
+  .placeholder-panel p {
+    font-size: 20.5px; font-weight: 500; color: var(--text-muted);
+  }
+
+  .placeholder-panel p strong { color: var(--text); }
+
+  /* ── DISTRIBUTION CHART ── */
+  .dist-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+  }
+
+  canvas#distChart { width: 100%; display: block; }
+
+  .dist-footer {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .dist-legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 16.5px; font-weight: 600; color: var(--text-muted);
+  }
+
+  .dist-legend-dot {
+    width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0;
+  }
+
+  /* ── METRICS ── */
+  .metrics-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+  }
+
+  .metrics-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(118px,1fr));
+    gap: 7px;
+  }
+
+  .metric-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 7px; padding: 10px 12px;
+  }
+
+  .metric-box-label {
+    font-size: 13.5px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;
+  }
+
+  .metric-box-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22.5px; font-weight: 700; color: var(--accent);
+  }
+
+  /* ── INTERPRETATION ── */
+  .interp-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+  }
+
+  .interp-badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 8px 16px; border-radius: 7px;
+    font-family: 'Syne', sans-serif; font-size: 22.5px; font-weight: 800;
+    letter-spacing: 0.5px; margin-bottom: 12px;
+  }
+
+  .interp-text {
+    font-size: 21px; color: var(--text-muted);
+    line-height: 1.7; margin-bottom: 10px;
+  }
+
+  .interp-text:last-child { margin-bottom: 0; }
+  .interp-text strong { color: var(--text); font-weight: 700; }
+
+  .centering-wrap {
+    margin: 12px 0 4px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 7px; padding: 12px 14px;
+  }
+
+  .centering-title {
+    font-size: 15px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--accent2); margin-bottom: 8px;
+  }
+
+  .centering-track {
+    height: 10px; background: var(--surface3); border-radius: 5px; position: relative;
+  }
+
+  .centering-fill { height: 100%; border-radius: 5px; transition: width 0.4s ease; }
+
+  .centering-pin {
+    position: absolute; top: -4px;
+    width: 2px; height: 18px; background: var(--text);
+    border-radius: 1px; transform: translateX(-50%);
+  }
+
+  .centering-labels {
+    display: flex; justify-content: space-between; margin-top: 5px;
+  }
+
+  .centering-labels span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px; color: var(--text-muted); font-weight: 700;
+  }
+
+  /* ── REFERENCE ── */
+  .reference-section {
+    grid-column: 1 / -1;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+
+  @media (max-width: 800px) {
+    .reference-section { grid-template-columns: 1fr; }
+  }
+
+  .ref-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+  }
+
+  .ref-table { width: 100%; border-collapse: collapse; font-size: 19.5px; }
+
+  .ref-table th {
+    font-size: 14.5px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--text-muted);
+    padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border);
+  }
+
+  .ref-table td {
+    padding: 9px 10px; border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace; font-size: 18px; color: var(--text-muted);
+    vertical-align: middle;
+  }
+
+  .ref-table td.val { font-weight: 700; }
+  .ref-table td.red   { color: var(--red); }
+  .ref-table td.amber { color: var(--amber); }
+  .ref-table td.green { color: var(--green); }
+  .ref-table td.lime  { color: var(--lime); }
+  .ref-table tr:last-child td { border-bottom: none; }
+
+  .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    margin-right: 6px; vertical-align: middle;
+  }
+
+  .formula-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .formula-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2); border-radius: 0 7px 7px 0;
+    padding: 10px 14px; display: flex; flex-direction: column; gap: 2px;
+  }
+
+  .formula-name {
+    font-size: 15px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--accent2);
+  }
+
+  .formula-eq {
+    font-family: 'JetBrains Mono', monospace; font-size: 19.5px;
+    font-weight: 700; color: var(--text);
+  }
+
+  .formula-desc { font-size: 17.5px; color: var(--text-muted); margin-top: 2px; line-height: 1.5; }
+
+  /* ── ANIMATIONS ── */
+  .fade-in { animation: fadeIn 0.35s ease forwards; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── SUB-NAV ── */
+  .sub-nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    gap: 4px;
+    position: sticky;
+    top: 58px;
+    z-index: 99;
+  }
+  .sub-nav-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-muted);
+    font-family: 'Figtree', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 12px 18px 10px;
+    cursor: pointer;
+    border-radius: 0;
+    transition: all 0.15s;
+  }
+  .sub-nav-btn:hover { color: var(--text); }
+  .sub-nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-group">
+    <div class="logo-hex">Cp</div>
+    <div class="logo-text">
+      <h1>Capacidade de Processo</h1>
+      <p>Cp e Cpk com entrada de medições — v4</p>
+      <div class="logo-prof">Prof. Carlos Souza</div>
+    </div>
+  </div>
+  <div class="header-sep"></div>
+  <span class="header-tag">Didático</span>
+  <div class="header-right">
+    <span class="professor-tag">Prof. Carlos Souza</span>
+    <button class="btn-theme" id="btnTema" onclick="toggleTema()">☀ Claro</button>
+  </div>
+</header>
+
+<nav class="sub-nav">
+  <button class="sub-nav-btn active" id="navCalc" onclick="showPage('calc')">Calculadora</button>
+  <button class="sub-nav-btn" id="navConc" onclick="showPage('conc')">Conceitos</button>
+</nav>
+
+<main>
+  <!-- ── LEFT: INPUTS ── -->
+  <aside>
+    <div class="card">
+      <div class="card-title">Parâmetros de Entrada</div>
+
+      <!-- INPUT MODE -->
+      <div class="toggle-bar">
+        <button class="toggle-btn active" id="iModoManual"   onclick="setInputModo('manual')">μ e σ diretos</button>
+        <button class="toggle-btn"        id="iModoMedicoes" onclick="setInputModo('medicoes')">Inserir medições</button>
+      </div>
+
+      <!-- SPEC LIMITS (always visible) -->
+      <div class="section-label">Limites de Especificação</div>
+
+      <div class="field-group">
+        <label>LSE — Limite Superior de Especificação</label>
+        <input id="usl" type="number" step="any" placeholder="ex: 10.050">
+      </div>
+      <div class="field-group">
+        <label>LIE — Limite Inferior de Especificação</label>
+        <input id="lsl" type="number" step="any" placeholder="ex: 9.950">
+      </div>
+
+      <!-- MANUAL MODE PANEL -->
+      <div id="panelManual">
+        <div class="section-label">Dados do Processo</div>
+
+        <div class="toggle-bar" style="margin-bottom:12px">
+          <button class="toggle-btn active" id="modoCpBtn"  onclick="setModo('cp')">Apenas Cp</button>
+          <button class="toggle-btn"        id="modoCpkBtn" onclick="setModo('cpk')">Cp e Cpk</button>
+        </div>
+
+        <div class="field-group" id="meanField" style="display:none">
+          <label>Média do processo (μ)</label>
+          <input id="mean" type="number" step="any" placeholder="ex: 10.005">
+        </div>
+        <div class="field-group">
+          <label>Desvio Padrão do processo (σ)</label>
+          <input id="sigma" type="number" step="any" min="0" placeholder="ex: 0.012">
+          <div class="input-hint">σ̂ = S (amostra) ou R̄/d₂ (gráfico de controle)</div>
+        </div>
+      </div>
+
+      <!-- MEASUREMENTS MODE PANEL -->
+      <div id="panelMedicoes" style="display:none">
+        <div class="section-label">Medições individuais <span id="nCount" class="n-count" style="display:none"></span></div>
+        <textarea
+          id="medicoes"
+          class="data-textarea"
+          placeholder="Cole ou digite os valores medidos, um por linha ou separados por espaço, ponto-e-vírgula ou tabulação.&#10;&#10;Exemplo:&#10;10.003&#10;9.998&#10;10.012&#10;9.991&#10;10.007"
+          oninput="onMedicoesInput()"
+        ></textarea>
+        <div class="input-hint">Aceita ponto ou vírgula como decimal (ex: 10.005 ou 10,005)</div>
+
+        <div id="statsLive" style="display:none">
+          <div class="stats-strip">
+            <div class="stat-chip">
+              <span class="stat-chip-label">n</span>
+              <span class="stat-chip-value" id="liveN">—</span>
+            </div>
+            <div class="stat-chip">
+              <span class="stat-chip-label">μ</span>
+              <span class="stat-chip-value" id="liveMean">—</span>
+            </div>
+            <div class="stat-chip">
+              <span class="stat-chip-label">σ</span>
+              <span class="stat-chip-value" id="liveSigma">—</span>
+            </div>
+            <div class="stat-chip">
+              <span class="stat-chip-label">Mín</span>
+              <span class="stat-chip-value" id="liveMin">—</span>
+            </div>
+            <div class="stat-chip">
+              <span class="stat-chip-label">Máx</span>
+              <span class="stat-chip-value" id="liveMax">—</span>
+            </div>
+          </div>
+          <div id="warnSmallN"  style="display:none" class="warning-small">⚠ Amostra pequena — estimativas pouco confiáveis (n &lt; 20)</div>
+          <div id="badgeNC"     style="display:none" class="nc-badge"></div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" onclick="calcular()">▶ Calcular</button>
+        <button class="btn-ghost"   onclick="limpar()">✕</button>
+      </div>
+
+      <div class="separator"></div>
+
+      <div class="examples-label">Exemplos</div>
+      <div class="examples-grid">
+        <button class="example-btn" onclick="carregarExemplo(0)">🟢 Altamente Capaz</button>
+        <button class="example-btn" onclick="carregarExemplo(1)">✅ Capaz</button>
+        <button class="example-btn" onclick="carregarExemplo(2)">⚠ Marginal</button>
+        <button class="example-btn" onclick="carregarExemplo(3)">❌ Incapaz</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── RIGHT: RESULTS ── -->
+  <div class="right-col">
+
+    <div class="gauges-card">
+      <div class="card-title">Índices de Capacidade</div>
+      <div id="gaugesContent">
+        <div class="placeholder-panel">
+          <svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <path d="M26 48 A22 22 0 1 1 48 26"/>
+            <path d="M42 26 L48 26 L48 32"/>
+            <circle cx="26" cy="26" r="3" fill="currentColor" stroke="none"/>
+            <line x1="26" y1="26" x2="38" y2="14"/>
+          </svg>
+          <p>Preencha os parâmetros e clique em <strong>Calcular</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dist-card" id="distCard" style="display:none">
+      <div class="card-title">Distribuição das Medições</div>
+      <canvas id="distChart"></canvas>
+      <div class="dist-footer">
+        <span class="dist-legend-item">
+          <span class="dist-legend-dot" style="background:rgba(249,115,22,0.65);border:1px solid #f97316"></span>Dentro da especificação
+        </span>
+        <span class="dist-legend-item">
+          <span class="dist-legend-dot" style="background:rgba(244,63,94,0.65);border:1px solid #f43f5e"></span>Fora da especificação
+        </span>
+        <span class="dist-legend-item">
+          <span class="dist-legend-dot" style="background:#f97316;width:24px;height:3px;border-radius:2px"></span>Curva normal N(μ,σ²)
+        </span>
+      </div>
+    </div>
+
+    <div class="metrics-card" id="metricsCard" style="display:none">
+      <div class="card-title">Métricas Detalhadas</div>
+      <div class="metrics-grid" id="metricsGrid"></div>
+    </div>
+
+    <div class="interp-card" id="interpCard" style="display:none">
+      <div class="card-title">Interpretação</div>
+      <div id="interpContent"></div>
+    </div>
+
+  </div>
+
+  <!-- ── REFERENCE ── -->
+  <div class="reference-section">
+
+    <div class="ref-card">
+      <div class="card-title">Fórmulas</div>
+      <div class="formula-list">
+        <div class="formula-item">
+          <div class="formula-name">Cp — Potencial de Capacidade</div>
+          <div class="formula-eq">Cp = (LSE − LIE) / (6σ)</div>
+          <div class="formula-desc">Razão entre tolerância total e dispersão do processo. Não considera a centralização da média.</div>
+        </div>
+        <div class="formula-item">
+          <div class="formula-name">Cpu / Cpl — Capacidade Unilateral</div>
+          <div class="formula-eq">Cpu = (LSE − μ) / (3σ)   Cpl = (μ − LIE) / (3σ)</div>
+          <div class="formula-desc">Margem entre a média e cada limite, em unidades de 3σ.</div>
+        </div>
+        <div class="formula-item">
+          <div class="formula-name">Cpk — Capacidade Real</div>
+          <div class="formula-eq">Cpk = mín(Cpu, Cpl)</div>
+          <div class="formula-desc">A menor margem define a capacidade real. Considera o deslocamento da média em relação aos limites.</div>
+        </div>
+        <div class="formula-item">
+          <div class="formula-name">σ amostral (desvio padrão)</div>
+          <div class="formula-eq">s = √[ Σ(xᵢ − x̄)² / (n−1) ]</div>
+          <div class="formula-desc">Estimativa do desvio padrão com correção de Bessel (n−1). Calculado automaticamente das medições.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ref-card">
+      <div class="card-title">Classificação dos Índices</div>
+      <table class="ref-table">
+        <thead>
+          <tr>
+            <th>Cp / Cpk</th>
+            <th>Classificação</th>
+            <th>DPM (aprox.)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="val red"><span class="dot" style="background:#f43f5e"></span>&lt; 1,00</td>
+            <td class="red">Processo incapaz</td>
+            <td class="red">&gt; 2.700</td>
+          </tr>
+          <tr>
+            <td class="val amber"><span class="dot" style="background:#f59e0b"></span>1,00 – 1,33</td>
+            <td class="amber">Minimamente capaz</td>
+            <td class="amber">64 – 2.700</td>
+          </tr>
+          <tr>
+            <td class="val green"><span class="dot" style="background:#34d399"></span>1,33 – 1,67</td>
+            <td class="green">Capaz</td>
+            <td class="green">0,6 – 64</td>
+          </tr>
+          <tr>
+            <td class="val lime"><span class="dot" style="background:#a3e635"></span>≥ 1,67</td>
+            <td class="lime">Altamente capaz</td>
+            <td class="lime">&lt; 0,6</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// ── STATE ──
+let inputModo = 'manual'; // 'manual' | 'medicoes'
+let modo = 'cp';          // 'cp'     | 'cpk'  (only for manual mode)
+let parsedValues = [];
+let lastDrawData = null;
+
+// ── SEEDED PSEUDO-RANDOM (Box-Muller) ──
+function seededRand(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = Math.imul(1664525, s) + 1013904223 >>> 0;
+    return s / 4294967296;
+  };
+}
+
+function genNormal(mean, sigma, n, seed) {
+  const r = seededRand(seed);
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const u1 = r() + 1e-12, u2 = r();
+    const z  = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    out.push(+(mean + sigma * z).toFixed(5));
+  }
+  return out;
+}
+
+// ── EXAMPLES ──
+const EXEMPLOS = [
+  { usl:10.050, lsl:9.950, values: genNormal(10.000, 0.0085, 35, 42),  modo:'medicoes' },
+  { usl:10.050, lsl:9.950, values: genNormal(10.005, 0.0155, 35, 77),  modo:'medicoes' },
+  { usl:10.050, lsl:9.950, values: genNormal(10.012, 0.0230, 35, 13),  modo:'medicoes' },
+  { usl:10.050, lsl:9.950, values: genNormal(10.018, 0.0310, 35, 99),  modo:'medicoes' },
+];
+
+function carregarExemplo(i) {
+  const e = EXEMPLOS[i];
+  document.getElementById('usl').value = e.usl;
+  document.getElementById('lsl').value = e.lsl;
+  setInputModo(e.modo);
+  const ta = document.getElementById('medicoes');
+  ta.value = e.values.join('\n');
+  onMedicoesInput();
+  calcular();
+}
+
+// ── MODE SETTERS ──
+function setInputModo(m) {
+  inputModo = m;
+  document.getElementById('iModoManual').classList.toggle('active',   m === 'manual');
+  document.getElementById('iModoMedicoes').classList.toggle('active', m === 'medicoes');
+  document.getElementById('panelManual').style.display   = m === 'manual'   ? '' : 'none';
+  document.getElementById('panelMedicoes').style.display = m === 'medicoes' ? '' : 'none';
+}
+
+function setModo(m) {
+  modo = m;
+  document.getElementById('modoCpBtn').classList.toggle('active',  m === 'cp');
+  document.getElementById('modoCpkBtn').classList.toggle('active', m === 'cpk');
+  document.getElementById('meanField').style.display = m === 'cpk' ? '' : 'none';
+}
+
+function toggleTema() {
+  document.body.classList.toggle('light-mode');
+  const isLight = document.body.classList.contains('light-mode');
+  document.getElementById('btnTema').textContent = isLight ? '🌙 Escuro' : '☀ Claro';
+  if (lastDrawData) {
+    drawAllGauges(lastDrawData.cp, lastDrawData.cpk);
+    if (lastDrawData.values) redrawDist();
+  }
+}
+
+// ── PARSE MEASUREMENTS ──
+function parseMeasurements(text) {
+  const matches = text.match(/[-+]?\d+[.,]?\d*/g) || [];
+  return matches
+    .map(s => parseFloat(s.replace(',', '.')))
+    .filter(v => !isNaN(v) && isFinite(v));
+}
+
+function calcStats(values) {
+  const n = values.length;
+  if (n < 2) return null;
+  const mean  = values.reduce((s, v) => s + v, 0) / n;
+  const sigma = Math.sqrt(values.reduce((s, v) => s + (v - mean) ** 2, 0) / (n - 1));
+  return { n, mean, sigma, min: Math.min(...values), max: Math.max(...values) };
+}
+
+function onMedicoesInput() {
+  parsedValues = parseMeasurements(document.getElementById('medicoes').value);
+  const lsl = parseFloat(document.getElementById('lsl').value);
+  const usl = parseFloat(document.getElementById('usl').value);
+  const cnt = document.getElementById('nCount');
+  if (parsedValues.length > 0) {
+    cnt.textContent = `n = ${parsedValues.length}`;
+    cnt.style.display = '';
+  } else {
+    cnt.style.display = 'none';
+  }
+  updateLiveStats(lsl, usl);
+}
+
+function updateLiveStats(lsl, usl) {
+  const stats = calcStats(parsedValues);
+  const liveEl = document.getElementById('statsLive');
+
+  if (!stats) { liveEl.style.display = 'none'; return; }
+  liveEl.style.display = '';
+
+  document.getElementById('liveN').textContent     = stats.n;
+  document.getElementById('liveMean').textContent  = fmtN(stats.mean, 5);
+  document.getElementById('liveSigma').textContent = fmtN(stats.sigma, 5);
+  document.getElementById('liveMin').textContent   = fmtN(stats.min, 4);
+  document.getElementById('liveMax').textContent   = fmtN(stats.max, 4);
+
+  document.getElementById('warnSmallN').style.display = stats.n < 20 ? '' : 'none';
+
+  const ncBadge = document.getElementById('badgeNC');
+  if (!isNaN(lsl) && !isNaN(usl)) {
+    const nc = parsedValues.filter(v => v < lsl || v > usl).length;
+    ncBadge.style.display = nc > 0 ? '' : 'none';
+    if (nc > 0) ncBadge.textContent = `⚠ ${nc} medição(ões) fora da especificação`;
+  } else {
+    ncBadge.style.display = 'none';
+  }
+}
+
+// ── STATS / MATH ──
+function erfc(x) {
+  const t = 1 / (1 + 0.3275911 * x);
+  const p = t * (0.254829592 + t * (-0.284496736 + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))));
+  return p * Math.exp(-x * x);
+}
+
+function normalCDF(x) {
+  return x >= 0 ? 1 - 0.5 * erfc(x / Math.SQRT2) : 0.5 * erfc(-x / Math.SQRT2);
+}
+
+function calcDPM(cpk) {
+  if (isNaN(cpk)) return null;
+  return Math.round(1e6 * 2 * (1 - normalCDF(3 * Math.max(cpk, 0))));
+}
+
+function fmtN(v, d = 4) {
+  return (isNaN(v) || v === undefined) ? '—' : v.toFixed(d);
+}
+
+// ── MAIN CALCULATION ──
+function calcular() {
+  const usl = parseFloat(document.getElementById('usl').value);
+  const lsl = parseFloat(document.getElementById('lsl').value);
+
+  if (isNaN(usl) || isNaN(lsl)) { alert('Preencha LSE e LIE.'); return; }
+  if (usl <= lsl) { alert('LSE deve ser maior que LIE.'); return; }
+
+  let mean, sigma, values = null;
+
+  if (inputModo === 'medicoes') {
+    const stats = calcStats(parsedValues);
+    if (!stats || stats.n < 2) { alert('Insira pelo menos 2 medições válidas.'); return; }
+    ({ mean, sigma } = stats);
+    values = parsedValues;
+  } else {
+    sigma = parseFloat(document.getElementById('sigma').value);
+    if (isNaN(sigma) || sigma <= 0) { alert('Preencha o Desvio Padrão (σ > 0).'); return; }
+    if (modo === 'cpk') {
+      mean = parseFloat(document.getElementById('mean').value);
+      if (isNaN(mean)) { alert('No modo Cp e Cpk, preencha a Média (μ).'); return; }
+    }
+  }
+
+  const cp  = (usl - lsl) / (6 * sigma);
+  let cpu, cpl, cpk;
+
+  const hasMean = !isNaN(mean) && mean !== undefined;
+  if (hasMean) {
+    cpu = (usl - mean) / (3 * sigma);
+    cpl = (mean - lsl) / (3 * sigma);
+    cpk = Math.min(cpu, cpl);
+  }
+
+  const showCpk = inputModo === 'medicoes' || (inputModo === 'manual' && modo === 'cpk');
+
+  renderGauges(cp, showCpk ? cpk : undefined);
+  if (values) renderDistChart(values, mean, sigma, usl, lsl);
+  else document.getElementById('distCard').style.display = 'none';
+  renderMetrics(cp, showCpk ? cpk : undefined, cpu, cpl, usl, lsl, mean, sigma, values);
+  renderInterpretation(cp, showCpk ? cpk : undefined, cpu, cpl, usl, lsl, mean, sigma, values);
+  drawAllGauges(cp, showCpk ? cpk : undefined);
+}
+
+// ── RENDER GAUGES ──
+const GAUGE_MAX = 2.5;
+const ZONES = [
+  { from:0,    to:1.00, color:'#f43f5e', dim:'rgba(244,63,94,0.18)',   label:'Incapaz'   },
+  { from:1.00, to:1.33, color:'#f59e0b', dim:'rgba(245,158,11,0.18)',  label:'Marginal'  },
+  { from:1.33, to:1.67, color:'#34d399', dim:'rgba(52,211,153,0.18)',  label:'Capaz'     },
+  { from:1.67, to:2.5,  color:'#a3e635', dim:'rgba(163,230,53,0.18)',  label:'Excelente' },
+];
+
+function getZone(v) {
+  for (const z of ZONES) if (v < z.to || z === ZONES[ZONES.length - 1]) return z;
+  return ZONES[ZONES.length - 1];
+}
+
+function valToAngle(v) {
+  return Math.PI + (Math.max(0, Math.min(v, GAUGE_MAX)) / GAUGE_MAX) * Math.PI;
+}
+
+function renderGauges(cp, cpk) {
+  const zCp  = getZone(cp);
+  const zCpk = cpk !== undefined ? getZone(cpk) : null;
+  const useCpk = cpk !== undefined;
+
+  const gtpl = (id, label, val, zone) => `
+    <div class="gauge-wrap">
+      <div class="gauge-label-top">${label}</div>
+      <canvas id="${id}" class="gauge"></canvas>
+      <div class="gauge-bottom">
+        <div class="gauge-big-num" style="color:${zone.color}">${fmtN(val, 3)}</div>
+        <div class="gauge-zone-label" style="color:${zone.color}">${zone.label}</div>
+      </div>
+    </div>`;
+
+  document.getElementById('gaugesContent').innerHTML = useCpk
+    ? `<div class="gauges-row fade-in">${gtpl('gaugeCp','Cp — Potencial',cp,zCp)}${gtpl('gaugeCpk','Cpk — Real',cpk,zCpk)}</div>`
+    : `<div class="gauges-row fade-in" style="justify-content:center">
+        <div class="gauge-wrap" style="max-width:300px">
+          <div class="gauge-label-top">Cp — Potencial de Capacidade</div>
+          <canvas id="gaugeCp" class="gauge"></canvas>
+          <div class="gauge-bottom">
+            <div class="gauge-big-num" style="color:${zCp.color}">${fmtN(cp,3)}</div>
+            <div class="gauge-zone-label" style="color:${zCp.color}">${zCp.label}</div>
+          </div>
+        </div>
+       </div>`;
+}
+
+function drawGauge(canvas, value) {
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.max(canvas.offsetWidth, 180);
+  const H = Math.round(W * 0.58);
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const isLight  = document.body.classList.contains('light-mode');
+  const bgColor  = isLight ? '#ffffff' : '#0b0d1a';
+  const trackCol = isLight ? '#e2e4f8' : '#1c2038';
+  const tickCol  = isLight ? '#9498c4' : '#2e3556';
+
+  const cx = W / 2, cy = H;
+  const ro = Math.min(cx - 2, H - 2) * 0.97;
+  const ri = ro * 0.60;
+  const GAP = 0.018;
+
+  ctx.fillStyle = bgColor; ctx.fillRect(0, 0, W, H);
+
+  // Background donut
+  ctx.beginPath();
+  ctx.arc(cx, cy, ro, Math.PI, 0, false);
+  ctx.arc(cx, cy, ri, 0, Math.PI, true);
+  ctx.closePath();
+  ctx.fillStyle = trackCol; ctx.fill();
+
+  // Zone backgrounds + rim
+  ZONES.forEach(z => {
+    const a1 = valToAngle(z.from) + GAP, a2 = valToAngle(z.to) - GAP;
+    if (a2 <= a1) return;
+    ctx.beginPath();
+    ctx.arc(cx, cy, ro, a1, a2, false);
+    ctx.arc(cx, cy, ri, a2, a1, true);
+    ctx.closePath();
+    ctx.fillStyle = z.dim; ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, ro - 1, a1, a2, false);
+    ctx.strokeStyle = z.color; ctx.lineWidth = 2.5; ctx.stroke();
+  });
+
+  const hasVal = value !== null && !isNaN(value);
+  if (hasVal) {
+    const zone = getZone(value);
+    const fillEnd = valToAngle(value);
+    ZONES.forEach(z => {
+      const zS = valToAngle(z.from), zE = valToAngle(z.to);
+      const de = Math.min(fillEnd, zE);
+      if (de <= zS + 0.005) return;
+      ctx.beginPath();
+      ctx.arc(cx, cy, ro - 3, zS + GAP * 0.5, de - GAP * 0.5, false);
+      ctx.arc(cx, cy, ri + 3, de - GAP * 0.5, zS + GAP * 0.5, true);
+      ctx.closePath();
+      ctx.fillStyle = z.color; ctx.globalAlpha = 0.88; ctx.fill(); ctx.globalAlpha = 1;
+    });
+
+    // Needle
+    const na = valToAngle(value);
+    const nr = ri - 4;
+    ctx.save();
+    ctx.shadowBlur = 10; ctx.shadowColor = zone.color;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + nr * Math.cos(na), cy + nr * Math.sin(na));
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.stroke();
+    ctx.restore();
+    ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fillStyle = zone.color; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+  } else {
+    ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fillStyle = trackCol; ctx.fill();
+  }
+
+  // Ticks & labels
+  const ticks = [{v:0,lab:'0'},{v:1.00,lab:'1,0'},{v:1.33,lab:'1,33'},{v:1.67,lab:'1,67'},{v:2.5,lab:'2,5'}];
+  ctx.font = 'bold 13.5px "JetBrains Mono", monospace';
+  ctx.fillStyle = tickCol;
+  const labR = ro + 13;
+  ticks.forEach(t => {
+    const a = valToAngle(t.v);
+    const lx = cx + labR * Math.cos(a), ly = cy + labR * Math.sin(a);
+    ctx.textAlign = lx < cx - 8 ? 'right' : lx > cx + 8 ? 'left' : 'center';
+    ctx.fillText(t.lab, lx, ly + 3);
+    const t1x = cx+(ro+2)*Math.cos(a), t1y = cy+(ro+2)*Math.sin(a);
+    const t2x = cx+(ro+7)*Math.cos(a), t2y = cy+(ro+7)*Math.sin(a);
+    ctx.beginPath(); ctx.moveTo(t1x,t1y); ctx.lineTo(t2x,t2y);
+    ctx.strokeStyle = tickCol; ctx.lineWidth = 1.5; ctx.stroke();
+  });
+}
+
+function drawAllGauges(cp, cpk) {
+  lastDrawData = { ...(lastDrawData||{}), cp, cpk };
+  requestAnimationFrame(() => {
+    const c1 = document.getElementById('gaugeCp');
+    if (c1) drawGauge(c1, cp);
+    const c2 = document.getElementById('gaugeCpk');
+    if (c2) drawGauge(c2, cpk ?? null);
+  });
+}
+
+// ── DISTRIBUTION CHART ──
+function renderDistChart(values, mean, sigma, usl, lsl) {
+  lastDrawData = { ...(lastDrawData||{}), values, mean, sigma, usl, lsl };
+  document.getElementById('distCard').style.display = '';
+  requestAnimationFrame(() => {
+    const c = document.getElementById('distChart');
+    if (c) drawDistChart(c, values, mean, sigma, usl, lsl);
+  });
+}
+
+function redrawDist() {
+  if (!lastDrawData || !lastDrawData.values) return;
+  const c = document.getElementById('distChart');
+  if (c) drawDistChart(c, lastDrawData.values, lastDrawData.mean, lastDrawData.sigma, lastDrawData.usl, lastDrawData.lsl);
+}
+
+function drawDistChart(canvas, values, mean, sigma, usl, lsl) {
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.max(canvas.offsetWidth, 300);
+  const H = 210;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const isLight = document.body.classList.contains('light-mode');
+  const bgColor = isLight ? '#ffffff' : '#0b0d1a';
+  const gridCol = isLight ? 'rgba(160,166,208,0.2)' : 'rgba(28,32,56,0.9)';
+  const axisCol = isLight ? '#9498c4' : '#2e3556';
+  const textCol = isLight ? '#3e4474' : '#8890b8';
+
+  const ML = 10, MR = 10, MT = 22, MB = 38;
+  const PW = W - ML - MR, PH = H - MT - MB;
+
+  // X range
+  const pad  = sigma * 1.2;
+  const xMin = Math.min(lsl - pad, mean - 4 * sigma, Math.min(...values));
+  const xMax = Math.max(usl + pad, mean + 4 * sigma, Math.max(...values));
+  const xRng = xMax - xMin;
+  const toX  = v => ML + ((v - xMin) / xRng) * PW;
+
+  // Histogram bins (Sturges)
+  const n     = values.length;
+  const nBins = Math.max(6, Math.min(22, Math.ceil(1 + Math.log2(n))));
+  const binW  = xRng / nBins;
+  const bins  = Array(nBins).fill(0);
+  values.forEach(v => {
+    const idx = Math.min(nBins - 1, Math.floor((v - xMin) / binW));
+    bins[idx]++;
+  });
+  const density   = bins.map(c => c / (n * binW));
+  const normPDF   = x => Math.exp(-0.5 * ((x - mean) / sigma) ** 2) / (sigma * Math.sqrt(2 * Math.PI));
+  const maxY      = Math.max(...density, normPDF(mean)) * 1.15;
+  const toY       = d => H - MB - (d / maxY) * PH;
+
+  ctx.fillStyle = bgColor; ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = gridCol; ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = MT + (PH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(ML, y); ctx.lineTo(ML + PW, y); ctx.stroke();
+  }
+
+  // Spec zone shading
+  const lslX = toX(lsl), uslX = toX(usl);
+  ctx.fillStyle = 'rgba(244,63,94,0.07)';
+  ctx.fillRect(ML, MT, Math.max(0, lslX - ML), PH);
+  ctx.fillRect(Math.min(ML + PW, uslX), MT, Math.max(0, ML + PW - uslX), PH);
+  ctx.fillStyle = 'rgba(52,211,153,0.05)';
+  ctx.fillRect(lslX, MT, Math.max(0, uslX - lslX), PH);
+
+  // Histogram bars
+  bins.forEach((count, i) => {
+    if (count === 0) return;
+    const x1   = xMin + i * binW, x2 = x1 + binW;
+    const dens = count / (n * binW);
+    const bx   = toX(x1);
+    const bw   = Math.max(1, toX(x2) - toX(x1) - 1);
+    const bh   = (dens / maxY) * PH;
+    const by   = H - MB - bh;
+    const ctr  = (x1 + x2) / 2;
+    const out  = ctr < lsl || ctr > usl;
+    ctx.fillStyle   = out ? 'rgba(244,63,94,0.65)'  : 'rgba(249,115,22,0.65)';
+    ctx.strokeStyle = out ? '#f43f5e' : '#f97316';
+    ctx.lineWidth = 0.8;
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeRect(bx, by, bw, bh);
+  });
+
+  // Normal curve
+  ctx.beginPath();
+  let first = true;
+  for (let px = 0; px <= PW; px++) {
+    const xv = xMin + (px / PW) * xRng;
+    const cy2 = toY(normPDF(xv));
+    if (first) { ctx.moveTo(ML + px, cy2); first = false; }
+    else ctx.lineTo(ML + px, cy2);
+  }
+  ctx.strokeStyle = '#f97316'; ctx.lineWidth = 2; ctx.stroke();
+
+  // Vertical reference lines
+  const vline = (xv, col, dash, lbl, lblY) => {
+    const x = toX(xv);
+    if (x < ML || x > ML + PW) return;
+    ctx.save();
+    ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(x, MT); ctx.lineTo(x, H - MB); ctx.stroke();
+    ctx.setLineDash([]); ctx.restore();
+    ctx.font = 'bold 13px "JetBrains Mono", monospace';
+    ctx.fillStyle = col; ctx.textAlign = 'center';
+    ctx.fillText(lbl, x, lblY);
+  };
+
+  vline(lsl,  '#f43f5e', [],     'LIE', MT - 8);
+  vline(usl,  '#f43f5e', [],     'LSE', MT - 8);
+  vline(mean, '#f97316', [5, 3], 'μ',   MT - 8);
+
+  // X axis
+  ctx.strokeStyle = axisCol; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(ML, H - MB); ctx.lineTo(ML + PW, H - MB); ctx.stroke();
+
+  // X axis labels
+  const dec = xRng < 0.5 ? 4 : xRng < 5 ? 3 : 2;
+  const shown = new Set();
+  [lsl, usl, mean].forEach(v => {
+    const x = toX(v);
+    if (x < ML + 10 || x > ML + PW - 10) return;
+    const key = Math.round(x);
+    if (shown.has(key)) return;
+    shown.add(key);
+    ctx.font = '13px "JetBrains Mono", monospace';
+    ctx.fillStyle = textCol; ctx.textAlign = 'center';
+    ctx.fillText(v.toFixed(dec), x, H - MB + 13);
+  });
+
+  // n label top-right
+  ctx.font = 'bold 14.5px "Figtree", sans-serif';
+  ctx.fillStyle = textCol; ctx.textAlign = 'right';
+  ctx.fillText(`n = ${n}`, ML + PW, MT + 10);
+
+  // Non-conforming label top-left
+  const nc = values.filter(v => v < lsl || v > usl).length;
+  if (nc > 0) {
+    ctx.font = 'bold 14.5px "Figtree", sans-serif';
+    ctx.fillStyle = '#f43f5e'; ctx.textAlign = 'left';
+    ctx.fillText(`${nc} fora da espec.`, ML + 4, MT + 10);
+  }
+}
+
+// ── RENDER METRICS ──
+function renderMetrics(cp, cpk, cpu, cpl, usl, lsl, mean, sigma, values) {
+  const n    = values ? values.length : null;
+  const dpm  = calcDPM(cpk !== undefined ? cpk : cp);
+  const slvl = (3 * (cpk !== undefined ? cpk : cp)).toFixed(2);
+  const items = [
+    { l:'Cp',          v: fmtN(cp,  4) },
+    { l:'Cpk',         v: cpk !== undefined ? fmtN(cpk, 4) : '—' },
+    { l:'Cpu',         v: cpu !== undefined ? fmtN(cpu, 4) : '—' },
+    { l:'Cpl',         v: cpl !== undefined ? fmtN(cpl, 4) : '—' },
+    { l:'n (amostras)',v: n !== null ? n : '—' },
+    { l:'μ',           v: mean !== undefined ? fmtN(mean, 5) : '—' },
+    { l:'σ',           v: fmtN(sigma, 5) },
+    { l:'6σ',          v: fmtN(6*sigma, 5) },
+    { l:'Tolerância',  v: fmtN(usl - lsl, 4) },
+    { l:'Nível σ',     v: slvl },
+    { l:'DPM (est.)',  v: dpm !== null ? dpm.toLocaleString('pt-BR') : '—' },
+  ];
+  if (values) {
+    const nc = values.filter(v => v < lsl || v > usl).length;
+    items.push({ l:'NC observadas', v: nc > 0 ? `${nc} (${(nc/values.length*100).toFixed(1)}%)` : '0' });
+  }
+
+  document.getElementById('metricsCard').style.display = '';
+  document.getElementById('metricsGrid').innerHTML = items.map(it =>
+    `<div class="metric-box">
+       <div class="metric-box-label">${it.l}</div>
+       <div class="metric-box-value">${it.v}</div>
+     </div>`
+  ).join('');
+}
+
+// ── RENDER INTERPRETATION ──
+function renderInterpretation(cp, cpk, cpu, cpl, usl, lsl, mean, sigma, values) {
+  const useCpk = cpk !== undefined;
+  const zCp   = getZone(cp);
+  const zCpk  = useCpk ? getZone(cpk) : null;
+  const badge = (z, txt) =>
+    `<div class="interp-badge fade-in" style="background:${z.dim};color:${z.color};border:1px solid ${z.color}44">${txt}</div>`;
+
+  let html = '<div class="fade-in">';
+
+  html += badge(zCp, `Cp = ${fmtN(cp,3)} — ${zCp.label}`);
+  html += `<p class="interp-text">`;
+  if (cp < 1) {
+    html += `A dispersão <strong>6σ = ${fmtN(6*sigma,4)}</strong> é maior que a tolerância <strong>${fmtN(usl-lsl,4)}</strong>.
+      O processo <strong>não consegue</strong> produzir dentro da especificação sistematicamente.`;
+  } else if (cp < 1.33) {
+    html += `A dispersão cabe na tolerância, mas ocupa <strong>${fmtN(100/cp,1)}%</strong> dela — margem estreita.
+      Qualquer desvio de centralização ou aumento de variação gera não conformidades.`;
+  } else if (cp < 1.67) {
+    html += `Boa capacidade potencial. A dispersão ocupa <strong>${fmtN(100/cp,1)}%</strong> da tolerância,
+      com folga suficiente para variações moderadas.`;
+  } else {
+    html += `Processo altamente capaz. A dispersão ocupa apenas <strong>${fmtN(100/cp,1)}%</strong>
+      da tolerância — excelente robustez contra variações.`;
+  }
+  html += `</p>`;
+
+  if (useCpk && mean !== undefined) {
+    const range = usl - lsl;
+    const pct   = range > 0 ? Math.max(0, Math.min(1, (mean - lsl) / range)) : 0.5;
+    const centered = Math.abs(pct - 0.5) < 0.04;
+    html += `<div class="centering-wrap">
+      <div class="centering-title">Posição da média no campo de tolerância</div>
+      <div class="centering-track">
+        <div class="centering-fill" style="width:${(pct*100).toFixed(1)}%;background:${centered?'var(--green)':'var(--amber)'}"></div>
+        <div class="centering-pin" style="left:${(pct*100).toFixed(1)}%"></div>
+      </div>
+      <div class="centering-labels">
+        <span>LIE=${fmtN(lsl,4)}</span>
+        <span>μ=${fmtN(mean,5)} (${(pct*100).toFixed(1)}%)</span>
+        <span>LSE=${fmtN(usl,4)}</span>
+      </div>
+    </div>`;
+
+    html += badge(zCpk, `Cpk = ${fmtN(cpk,3)} — ${zCpk.label}`);
+    html += `<p class="interp-text">`;
+    const diff = Math.abs(cp - cpk);
+    if (diff < 0.02) {
+      html += `Média <strong>bem centralizada</strong> — Cp ≈ Cpk.`;
+    } else if (cpu < cpl) {
+      html += `Lado crítico <strong>superior</strong>: Cpu=${fmtN(cpu,3)} &lt; Cpl=${fmtN(cpl,3)}.
+        Média deslocada em direção ao LSE. Reduzir μ melhora o Cpk.`;
+    } else {
+      html += `Lado crítico <strong>inferior</strong>: Cpl=${fmtN(cpl,3)} &lt; Cpu=${fmtN(cpu,3)}.
+        Média deslocada em direção ao LIE. Aumentar μ melhora o Cpk.`;
+    }
+    if (diff > 0.05) {
+      html += ` O potencial não aproveitado (Cp−Cpk = ${fmtN(diff,3)}) pode ser recuperado
+        centralizando o processo — sem reduzir a variabilidade.`;
+    }
+    const dpm = calcDPM(cpk);
+    html += ` DPM estimado: <strong>${dpm !== null ? dpm.toLocaleString('pt-BR') : '—'}</strong>.`;
+    html += `</p>`;
+  }
+
+  if (values) {
+    const nc = values.filter(v => v < lsl || v > usl).length;
+    if (nc > 0) {
+      html += `<p class="interp-text" style="color:var(--red)">
+        <strong>${nc} de ${values.length} peças</strong> medidas estão fora da especificação
+        (${(nc/values.length*100).toFixed(1)}% de não conformidade observada na amostra).
+      </p>`;
+    }
+  }
+
+  html += '</div>';
+  document.getElementById('interpCard').style.display = '';
+  document.getElementById('interpContent').innerHTML = html;
+}
+
+// ── LIMPAR ──
+function limpar() {
+  ['usl','lsl','mean','sigma'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('medicoes').value = '';
+  parsedValues = []; lastDrawData = null;
+  document.getElementById('nCount').style.display     = 'none';
+  document.getElementById('statsLive').style.display  = 'none';
+  document.getElementById('distCard').style.display   = 'none';
+  document.getElementById('metricsCard').style.display = 'none';
+  document.getElementById('interpCard').style.display  = 'none';
+  document.getElementById('gaugesContent').innerHTML = `
+    <div class="placeholder-panel">
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path d="M26 48 A22 22 0 1 1 48 26"/>
+        <path d="M42 26 L48 26 L48 32"/>
+        <circle cx="26" cy="26" r="3" fill="currentColor" stroke="none"/>
+        <line x1="26" y1="26" x2="38" y2="14"/>
+      </svg>
+      <p>Preencha os parâmetros e clique em <strong>Calcular</strong></p>
+    </div>`;
+}
+
+// ── RESIZE ──
+window.addEventListener('resize', () => {
+  if (lastDrawData) {
+    drawAllGauges(lastDrawData.cp, lastDrawData.cpk);
+    redrawDist();
+  }
+});
+
+// ── INIT ──
+setInputModo('manual');
+setModo('cp');
+
+function showPage(p) {
+  document.getElementById('navCalc').classList.toggle('active', p==='calc');
+  document.getElementById('navConc').classList.toggle('active', p==='conc');
+  document.querySelector('main').style.display = p==='calc' ? '' : 'none';
+  document.getElementById('conceitos-page').style.display = p==='conc' ? '' : 'none';
+}
+</script>
+
+<div id="conceitos-page" style="display:none; max-width:860px; margin:0 auto; padding:32px 20px 80px;">
+
+  <!-- INTRO -->
+  <div style="margin-bottom:32px">
+    <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--text);letter-spacing:-0.5px;margin-bottom:8px">Guia de Conceitos</div>
+    <div style="font-size:17px;color:var(--text-muted);line-height:1.7">Referência completa de todos os índices, fórmulas e interpretações usados neste aplicativo.</div>
+  </div>
+
+  <!-- 1. O QUE É CAPACIDADE -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-title">1. O que é Capacidade de Processo?</div>
+    <p style="font-size:17px;color:var(--text-muted);line-height:1.8;margin-bottom:14px">
+      Capacidade de processo é a <strong style="color:var(--text)">aptidão de um processo produtivo de entregar produtos dentro dos limites de especificação</strong>, de forma consistente e previsível. Um processo capaz produz peças/itens que atendem ao cliente sistematicamente — não apenas por sorte ou com esforço extra de inspeção.
+    </p>
+    <p style="font-size:17px;color:var(--text-muted);line-height:1.8;margin-bottom:14px">
+      A análise de capacidade responde à pergunta: <strong style="color:var(--accent)">"O processo consegue fazer o que o cliente pede?"</strong>
+    </p>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 7px 7px 0;padding:12px 16px;font-size:16px;color:var(--text-muted);line-height:1.7">
+      <strong style="color:var(--accent)">Por que medir?</strong> Processos com alta variabilidade geram não conformidades, retrabalho e custos. Os índices Cp e Cpk quantificam objetivamente a capacidade, permitindo comparar processos, estabelecer metas e tomar decisões baseadas em dados.
+    </div>
+  </div>
+
+  <!-- 2. LIMITES DE ESPECIFICAÇÃO -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-title">2. Limites de Especificação (LSE e LIE)</div>
+    <p style="font-size:17px;color:var(--text-muted);line-height:1.8;margin-bottom:14px">
+      Os limites de especificação definem a <strong style="color:var(--text)">faixa aceitável de variação</strong> de uma característica de qualidade. São definidos pelo cliente, pelo projeto do produto ou por normas técnicas — nunca pelo processo.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:12px 14px">
+        <div style="font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent2);margin-bottom:4px">LSE</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px">Limite Superior de Especificação</div>
+        <div style="font-size:15px;color:var(--text-muted)">Valor máximo tolerado. Acima deste limite, o item é considerado não conforme.</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:12px 14px">
+        <div style="font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent2);margin-bottom:4px">LIE</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px">Limite Inferior de Especificação</div>
+        <div style="font-size:15px;color:var(--text-muted)">Valor mínimo tolerado. Abaixo deste limite, o item também é não conforme.</div>
+      </div>
+    </div>
+    <!-- SVG diagram: tolerance band -->
+    <svg viewBox="0 0 500 90" style="width:100%;display:block;margin:8px 0" font-family="'JetBrains Mono',monospace">
+      <rect x="0" y="0" width="500" height="90" fill="transparent"/>
+      <!-- red zones -->
+      <rect x="20" y="20" width="90" height="40" fill="rgba(244,63,94,0.15)" rx="3"/>
+      <rect x="390" y="20" width="90" height="40" fill="rgba(244,63,94,0.15)" rx="3"/>
+      <!-- green zone -->
+      <rect x="110" y="20" width="280" height="40" fill="rgba(52,211,153,0.10)" rx="3"/>
+      <!-- LIE line -->
+      <line x1="110" y1="10" x2="110" y2="70" stroke="#f43f5e" stroke-width="2"/>
+      <!-- LSE line -->
+      <line x1="390" y1="10" x2="390" y2="70" stroke="#f43f5e" stroke-width="2"/>
+      <!-- labels -->
+      <text x="110" y="8" text-anchor="middle" fill="#f43f5e" font-size="12" font-weight="700">LIE</text>
+      <text x="390" y="8" text-anchor="middle" fill="#f43f5e" font-size="12" font-weight="700">LSE</text>
+      <text x="250" y="44" text-anchor="middle" fill="#34d399" font-size="13" font-weight="700">ZONA CONFORME</text>
+      <text x="65" y="44" text-anchor="middle" fill="#f43f5e" font-size="11">NC</text>
+      <text x="435" y="44" text-anchor="middle" fill="#f43f5e" font-size="11">NC</text>
+      <!-- arrow indicating tolerance -->
+      <line x1="110" y1="78" x2="390" y2="78" stroke="#8890b8" stroke-width="1.5" marker-start="url(#arr)" marker-end="url(#arr2)"/>
+      <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6" fill="none" stroke="#8890b8" stroke-width="1.5"/></marker>
+        <marker id="arr2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto-start-reverse"><path d="M6,0 L0,3 L6,6" fill="none" stroke="#8890b8" stroke-width="1.5"/></marker>
+      </defs>
+      <text x="250" y="88" text-anchor="middle" fill="#8890b8" font-size="11">Tolerância = LSE − LIE</text>
+    </svg>
+    <p style="font-size:15px;color:var(--text-muted);line-height:1.7;margin-top:8px">
+      <strong style="color:var(--text)">Importante:</strong> Limites de especificação ≠ Limites de controle. Limites de controle (usados em cartas de controle) são derivados do processo; limites de especificação vêm do cliente/projeto.
+    </p>
+  </div>
+
+  <!-- 3. DISTRIBUIÇÃO NORMAL -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-title">3. Distribuição Normal e Desvio Padrão (σ)</div>
+    <p style="font-size:17px;color:var(--text-muted);line-height:1.8;margin-bottom:14px">
+      A maioria dos processos industriais estáveis produz medições que seguem uma <strong style="color:var(--text)">distribuição normal (curva em sino)</strong>. Ela é caracterizada por dois parâmetros:
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:12px 14px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--accent);margin-bottom:4px">μ (mu)</div>
+        <div style="font-size:15px;color:var(--text-muted)">Média do processo — o centro da distribuição. Define onde o processo está centrado.</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:12px 14px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--accent);margin-bottom:4px">σ (sigma)</div>
+        <div style="font-size:15px;color:var(--text-muted)">Desvio padrão — mede a dispersão (variabilidade) do processo em torno da média.</div>
+      </div>
+    </div>
+    <!-- Bell curve SVG with 1σ 2σ 3σ -->
+    <svg viewBox="0 0 500 140" style="width:100%;display:block;margin:8px 0">
+      <rect width="500" height="140" fill="transparent"/>
+      <!-- shaded regions -->
+      <path d="M80,120 Q110,118 130,100 Q150,75 180,40 Q200,20 250,15 Q300,20 320,40 Q350,75 370,100 Q390,118 420,120 Z" fill="rgba(249,115,22,0.08)"/>
+      <path d="M130,100 Q150,75 180,40 Q200,20 250,15 Q300,20 320,40 Q350,75 370,100 Q340,85 310,60 Q280,30 250,25 Q220,30 190,60 Q160,85 130,100 Z" fill="rgba(249,115,22,0.10)"/>
+      <path d="M190,60 Q220,30 250,25 Q280,30 310,60 Q280,50 250,47 Q220,50 190,60 Z" fill="rgba(249,115,22,0.15)"/>
+      <!-- curve -->
+      <path d="M60,122 Q80,121 100,118 Q130,110 160,90 Q190,65 210,45 Q230,28 250,23 Q270,28 290,45 Q310,65 340,90 Q370,110 400,118 Q420,121 440,122" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- vertical lines -->
+      <line x1="250" y1="22" x2="250" y2="122" stroke="#f97316" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="190" y1="60" x2="190" y2="122" stroke="#a78bfa" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="310" y1="60" x2="310" y2="122" stroke="#a78bfa" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="130" y1="100" x2="130" y2="122" stroke="#8890b8" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="370" y1="100" x2="370" y2="122" stroke="#8890b8" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="80" y1="120" x2="80" y2="122" stroke="#2e3556" stroke-width="1"/>
+      <line x1="420" y1="120" x2="420" y2="122" stroke="#2e3556" stroke-width="1"/>
+      <!-- x axis -->
+      <line x1="50" y1="122" x2="450" y2="122" stroke="#2e3556" stroke-width="1.5"/>
+      <!-- labels -->
+      <text x="250" y="135" text-anchor="middle" fill="#f97316" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700">μ</text>
+      <text x="190" y="135" text-anchor="middle" fill="#a78bfa" font-family="'JetBrains Mono',monospace" font-size="11">μ−σ</text>
+      <text x="310" y="135" text-anchor="middle" fill="#a78bfa" font-family="'JetBrains Mono',monospace" font-size="11">μ+σ</text>
+      <text x="130" y="135" text-anchor="middle" fill="#8890b8" font-family="'JetBrains Mono',monospace" font-size="10">μ−2σ</text>
+      <text x="370" y="135" text-anchor="middle" fill="#8890b8" font-family="'JetBrains Mono',monospace" font-size="10">μ+2σ</text>
+      <text x="80" y="135" text-anchor="middle" fill="#2e3556" font-family="'JetBrains Mono',monospace" font-size="10">μ−3σ</text>
+      <text x="420" y="135" text-anchor="middle" fill="#2e3556" font-family="'JetBrains Mono',monospace" font-size="10">μ+3σ</text>
+      <!-- percentage labels -->
+      <text x="250" y="55" text-anchor="middle" fill="#f97316" font-family="'Figtree',sans-serif" font-size="11" font-weight="700">68,27%</text>
+      <text x="250" y="80" text-anchor="middle" fill="#a78bfa" font-family="'Figtree',sans-serif" font-size="11" font-weight="700">95,45%</text>
+      <text x="250" y="107" text-anchor="middle" fill="#8890b8" font-family="'Figtree',sans-serif" font-size="10">99,73%</text>
+    </svg>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;text-align:center">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:#f97316">68,27%</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:2px">dentro de μ ± 1σ</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;text-align:center">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:#a78bfa">95,45%</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:2px">dentro de μ ± 2σ</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;text-align:center">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:#8890b8">99,73%</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:2px">dentro de μ ± 3σ</div>
+      </div>
+    </div>
+
+    <!-- Desvio padrão amostral -->
+    <div style="margin-top:18px">
+      <div style="font-size:15px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent2);margin-bottom:10px;display:flex;align-items:center;gap:6px">Desvio Padrão Amostral <span style="flex:1;height:1px;background:var(--border);display:block"></span></div>
+      <div class="formula-item">
+        <div class="formula-name">σ amostral (s)</div>
+        <div class="formula-eq">s = √[ Σ(xᵢ − x̄)² / (n−1) ]</div>
+        <div class="formula-desc">O divisor <strong>(n−1)</strong> é a <strong>correção de Bessel</strong>: ao estimar σ de uma amostra, dividir por n subestimaria a variabilidade real da população. Usar n−1 produz uma estimativa não-tendenciosa.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Cp -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-title">4. Cp — Potencial de Capacidade</div>
+    <p style="font-size:17px;color:var(--text-muted);line-height:1.8;margin-bottom:14px">
+      O índice <strong style="color:var(--text)">Cp</strong> mede a relação entre a tolerância do processo (LSE − LIE) e sua variação natural (6σ). Ele indica o <em>potencial</em> do processo — supondo que ele estivesse perfeitamente centralizado.
+    </p>
+    <div class="formula-item" style="margin-bottom:14px">
+      <div class="formula-name">Fórmula do Cp</div>
+      <div class="formula-eq">Cp = (LSE − LIE) / (6σ)</div>
+      <div class="formula-desc">A variação natural de um processo normal é representada por 6σ (de μ−3σ a μ+3σ), que engloba 99,73% das peças produzidas.</div>
+    </div>
+    <!-- Visual: process spread vs tolerance -->
+    <div style="margin:14px 0">
+      <div style="font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Interpretação Visual do Cp</div>
+      <!-- Cp < 1 -->
+      <div style="margin-bottom:10px">
+        <div style="font-size:13px;color:var(--red);font-weight:700;margin-bottom:4px">Cp &lt; 1 — Processo incapaz (dispersão maior que a tolerância)</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;position:relative;overflow:hidden">
+          <svg viewBox="0 0 400 50" style="width:100%;display:block">
+            <rect x="120" y="5" width="160" height="40" fill="rgba(52,211,153,0.08)" rx="2"/>
+            <line x1="120" y1="0" x2="120" y2="50" stroke="#f43f5e" stroke-width="2"/>
+            <line x1="280" y1="0" x2="280" y2="50" stroke="#f43f5e" stroke-width="2"/>
+            <path d="M30,45 Q80,44 120,35 Q160,20 200,8 Q240,20 280,35 Q320,44 370,45" fill="rgba(244,63,94,0.2)" stroke="#f43f5e" stroke-width="2"/>
+            <text x="120" y="48" text-anchor="middle" fill="#f43f5e" font-size="10" font-family="'JetBrains Mono',monospace">LIE</text>
+            <text x="280" y="48" text-anchor="middle" fill="#f43f5e" font-size="10" font-family="'JetBrains Mono',monospace">LSE</text>
+          </svg>
+        </div>
+      </div>
+      <!-- Cp = 1 -->
+      <div style="margin-bottom:10px">
+        <div style="font-size:13px;color:var(--amber);font-weight:700;margin-bottom:4px">Cp = 1,0 — Processo marginal (dispersão = tolerância)</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 14px">
+          <svg viewBox="0 0 400 50" style="width:100%;display:block">
+            <rect x="80" y="5" width="240" height="40" fill="rgba(52,211,153,0.08)" rx="2"/>
+            <line x1="80" y1="0" x2="80" y2="50" stroke="#f43f5e" stroke-width="2"/>
+            <line x1="320" y1="0" x2="320" y2="50" stroke="#f43f5e" stroke-width="2"/>
+            <path d="M80,45 Q110,42 140,30 Q170,12 200,7 Q230,12 260,30 Q290,42 320,45" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="2"/>
+            <text x="80" y="48" text-anchor="middle" fill="#f43f5e" font-size="10" font-family="'JetBrains Mono',monospace">LIE</text>
+            <text x="320" y="48" text-anchor="middle" fill="#f43f5e" font-size="10" font-family="'JetBrains Mono',monospace">LSE</text>
+          </svg>
+        </div>
+      </div>
+      <!-- Cp > 1.33 -->
+      <div>
+        <div style="font-size:13px;color:var(--green);font-weight:700;margin-bottom:4px">Cp &gt; 1,33 — Processo capaz (dispersão bem menor que a tolerância)</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 14px">
+          <svg viewBox="0 0 400 50" style="width:100%;display:block">
+            <rect x="60" y="5" width="280" height="40" fill="rgba(52,211,153,0.08)" rx="2"/>
+            <line x1="60" y1="0" x2="60" y2="50" stroke="#f43f5e" stroke-width="2"/>
+            <line x1="340" y1="0" x2="340" y2="50" stroke="#f43f5e" stroke-width="2"/>
+            <path d="M130,45 Q155,42 170,30 Q185,12 200,7 Q215,12 230,30 Q245,42 270,45" fill="rgba(52,211,153,0.2)" stroke="#34d399" stroke-width="2"/>
+            <text x="60" y="48" text-anchor="middle" fill="#f43f5e" font-size="10" font-family="'JetBrains Mono',monospace">LIE</text>
+            <text x="340" y="48" text-anchor="middle" fill="#f43f5e" font-size="10" font-family="'JetBrains Mono',monospace">LSE</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div style="background:var(--amber-dim);border:1px solid rgba(245,158,11,0.3);border-radius:6px;padding:10px 14px;font-size:15px;color:var(--amber);margin-top:10px">
+      <strong>Limitação do Cp:</strong> Ele NÃO considera onde a média está dentro da tolerância. Um processo pode ter Cp = 2,0 mas produzir peças fora da especificação se a média estiver deslocada!
+    </div>
+  </div>
+
+  <!-- 5. Cpu e Cpl -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-title">5. Cpu e Cpl — Capacidade Unilateral</div>
+    <p style="font-size:17px;color:var(--text-muted);line-height:1.8;margin-bottom:14px">
+      Enquanto o Cp mede a capacidade bilateral (em relação aos dois limites ao mesmo tempo), os índices <strong style="color:var(--text)">Cpu</strong> e <strong style="color:var(--text)">Cpl</strong> medem a margem de cada lado separadamente.
+    </p>
+    <div class="formula-list">
+      <div class="formula-item">
+        <div class="formula-name">Cpu — Capacidade em relação ao limite Superior</div>
+        <div class="formula-eq">Cpu = (LSE − μ) / (3σ)</div>
+        <div class="formula-desc">Quantas vezes 3σ cabem entre a média e o LSE. Quanto maior, mais distante a média está do limite superior.</div>
+      </div>
+      <div class="formula-item">
+        <div class="formula-name">Cpl — Capacidade em relação ao limite Inferior</div>
+        <div class="formula-eq">Cpl = (μ − LIE) / (3σ)</div>
+        <div class="formula-desc">Quantas vezes 3σ cabem entre a média e o LIE. Quanto maior, mais distante a média está do limite inferior.</div>
+      </div>
+    </div>
+    <p style="font-size:15px;color:var(--text-muted);line-height:1.7;margin-top:12px">
+      Um valor de Cpu ou Cpl igual a <strong style="color:var(--text)">1,0</strong> significa que a média está exatamente a 3σ do limite correspondente — ou seja, 0,13% das peças ultrapassariam aquele lado.
+    </p>
+  </div>
+
+  <!-- 6. Cpk -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-title">6. Cpk — Capacidade Real</div>
+    <p style="font-size:17px;color:var(--text-muted);line-height:1.8;margin-bottom:14px">
+      O <strong style="color:var(--text)">Cpk</strong> é o índice mais importante na prática. Ele representa a <em>capacidade real</em> do processo, levando em conta tanto a variabilidade quanto o deslocamento da média.
+    </p>
+    <div class="formula-item" style="margin-bottom:14px">
+      <div class="formula-name">Fórmula do Cpk</div>
+      <div class="formula-eq">Cpk = mín(Cpu, Cpl)</div>
+      <div class="formula-desc">O lado com menor folga determina a capacidade real. A cadeia é tão forte quanto seu elo mais fraco.</div>
+    </div>
+    <!-- Cp vs Cpk visual -->
+    <div style="margin:14px 0">
+      <div style="font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Cp vs Cpk — Processo Descentralizado</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px 14px">
+        <svg viewBox="0 0 400 70" style="width:100%;display:block">
+          <rect x="60" y="5" width="280" height="50" fill="rgba(52,211,153,0.06)" rx="2"/>
+          <line x1="60" y1="0" x2="60" y2="60" stroke="#f43f5e" stroke-width="2"/>
+          <line x1="340" y1="0" x2="340" y2="60" stroke="#f43f5e" stroke-width="2"/>
+          <!-- process centered at 270 (shifted right) -->
+          <path d="M190,58 Q215,55 235,42 Q255,22 270,12 Q285,22 305,42 Q320,55 350,58" fill="rgba(249,115,22,0.15)" stroke="#f97316" stroke-width="2"/>
+          <!-- mean line -->
+          <line x1="270" y1="5" x2="270" y2="60" stroke="#f97316" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <!-- Cpl arrow (long) -->
+          <line x1="60" y1="30" x2="270" y2="30" stroke="#34d399" stroke-width="1.5" marker-end="url(#garr)"/>
+          <!-- Cpu arrow (short) -->
+          <line x1="270" y1="38" x2="340" y2="38" stroke="#f43f5e" stroke-width="1.5" marker-end="url(#rarr)"/>
+          <defs>
+            <marker id="garr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#34d399"/></marker>
+            <marker id="rarr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#f43f5e"/></marker>
+          </defs>
+          <text x="165" y="26" text-anchor="middle" fill="#34d399" font-size="11" font-family="'JetBrains Mono',monospace">Cpl (grande)</text>
+          <text x="305" y="34" text-anchor="middle" fill="#f43f5e" font-size="11" font-family="'JetBrains Mono',monospace">Cpu (pequeno)</text>
+          <text x="60" y="68" text-anchor="middle" fill="#f43f5e" font-size="10" font-family="'JetBrains Mono',monospace">LIE</text>
+          <text x="340" y="68" text-anchor="middle" fill="#f43f5e" font-size="10" font-family="'JetBrains Mono',monospace">LSE</text>
+          <text x="270" y="68" text-anchor="middle" fill="#f97316" font-size="10" font-family="'JetBrains Mono',monospace">μ</text>
+        </svg>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:6px">Processo com boa dispersão (Cp alto) mas média deslocada para a direita → Cpk = Cpu (pequeno) → risco real no lado superior.</div>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:12px 14px;font-size:15px;color:var(--text-muted);line-height:1.7">
+      <strong style="color:var(--text)">Relação fundamental:</strong> Cpk ≤ Cp sempre. Quando o processo está perfeitamente centralizado (μ = ponto médio da especificação), Cpk = Cp. Quanto mais descentralizado, maior a diferença Cp − Cpk.
+    </div>
+  </div>
+
+  <!-- 7. DPM e Nível Sigma -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-title">7. DPM e Nível Sigma</div>
+    <p style="font-size:17px;color:var(--text-muted);line-height:1.8;margin-bottom:14px">
+      <strong style="color:var(--text)">DPM</strong> (Defeitos Por Milhão) é o número esperado de peças não conformes em um lote de 1.000.000 unidades, calculado a partir da distribuição normal.
+    </p>
+    <div class="formula-item" style="margin-bottom:16px">
+      <div class="formula-name">DPM a partir do Cpk</div>
+      <div class="formula-eq">DPM ≈ 10⁶ × 2 × [1 − Φ(3 × Cpk)]</div>
+      <div class="formula-desc">Φ é a função de distribuição acumulada normal padrão. O fator 2 considera não conformidades em ambos os lados (bilateral).</div>
+    </div>
+    <!-- Table -->
+    <table class="ref-table" style="margin-bottom:14px">
+      <thead>
+        <tr>
+          <th>Cpk</th>
+          <th>Nível σ</th>
+          <th>DPM (aprox.)</th>
+          <th>Rendimento</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="val red">0,67</td><td>2σ</td><td class="red">45.500</td><td class="red">95,45%</td></tr>
+        <tr><td class="val red">1,00</td><td>3σ</td><td class="red">2.700</td><td class="red">99,73%</td></tr>
+        <tr><td class="val amber">1,17</td><td>3,5σ</td><td class="amber">465</td><td class="amber">99,95%</td></tr>
+        <tr><td class="val amber">1,33</td><td>4σ</td><td class="amber">64</td><td class="amber">99,994%</td></tr>
+        <tr><td class="val green">1,50</td><td>4,5σ</td><td class="green">6,8</td><td class="green">99,9993%</td></tr>
+        <tr><td class="val green">1,67</td><td>5σ</td><td class="green">0,57</td><td class="green">99,99994%</td></tr>
+        <tr><td class="val lime">2,00</td><td>6σ</td><td class="lime">0,002</td><td class="lime">99,9999998%</td></tr>
+      </tbody>
+    </table>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:12px 14px;font-size:15px;color:var(--text-muted);line-height:1.7">
+      <strong style="color:var(--accent2)">Six Sigma:</strong> A metodologia Six Sigma busca atingir Cpk ≥ 2,0, equivalente a apenas 0,002 DPM. Na prática industrial, considera-se um desvio de 1,5σ na média ao longo do tempo, resultando em 3,4 DPM — o famoso objetivo "Seis Sigma".
+    </div>
+  </div>
+
+  <!-- 8. Classificação -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-title">8. Classificação dos Índices</div>
+    <table class="ref-table">
+      <thead>
+        <tr><th>Cp / Cpk</th><th>Classificação</th><th>DPM (aprox.)</th><th>O que significa</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="val red"><span class="dot" style="background:#f43f5e"></span>&lt; 1,00</td>
+          <td class="red">Incapaz</td>
+          <td class="red">&gt; 2.700</td>
+          <td style="font-size:14px;color:var(--text-muted)">O processo não cabe na tolerância. Ação imediata necessária.</td>
+        </tr>
+        <tr>
+          <td class="val amber"><span class="dot" style="background:#f59e0b"></span>1,00 – 1,33</td>
+          <td class="amber">Marginal</td>
+          <td class="amber">64 – 2.700</td>
+          <td style="font-size:14px;color:var(--text-muted)">Minimamente aceitável. Monitoramento intenso. Qualquer desvio gera NC.</td>
+        </tr>
+        <tr>
+          <td class="val green"><span class="dot" style="background:#34d399"></span>1,33 – 1,67</td>
+          <td class="green">Capaz</td>
+          <td class="green">0,6 – 64</td>
+          <td style="font-size:14px;color:var(--text-muted)">Bom desempenho. Padrão exigido em muitas indústrias (ex: automotiva).</td>
+        </tr>
+        <tr>
+          <td class="val lime"><span class="dot" style="background:#a3e635"></span>≥ 1,67</td>
+          <td class="lime">Altamente Capaz</td>
+          <td class="lime">&lt; 0,6</td>
+          <td style="font-size:14px;color:var(--text-muted)">Excelente. Processo robusto, com grande margem de segurança.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 9. Cp vs Cpk interpretação -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-title">9. Interpretação: Cp vs Cpk</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div style="background:var(--green-dim);border:1px solid rgba(52,211,153,0.3);border-radius:7px;padding:14px">
+        <div style="font-weight:700;color:var(--green);margin-bottom:6px">Cp ≈ Cpk</div>
+        <div style="font-size:14px;color:var(--text-muted);line-height:1.6">Processo centralizado. A média está próxima ao centro da tolerância. Ação: reduzir σ para aumentar ambos.</div>
+      </div>
+      <div style="background:var(--amber-dim);border:1px solid rgba(245,158,11,0.3);border-radius:7px;padding:14px">
+        <div style="font-weight:700;color:var(--amber);margin-bottom:6px">Cpk &lt;&lt; Cp</div>
+        <div style="font-size:14px;color:var(--text-muted);line-height:1.6">Processo descentralizado. Há potencial não aproveitado. Ação primária: centralizar a média (sem reduzir σ).</div>
+      </div>
+    </div>
+    <div style="font-size:15px;color:var(--text-muted);line-height:1.7">
+      <strong style="color:var(--text)">Regra prática:</strong> Se Cp &lt; 1,33, o problema é variabilidade — reduza σ. Se Cp ≥ 1,33 mas Cpk &lt; 1,33, o problema é centralização — ajuste μ.
+    </div>
+  </div>
+
+  <!-- 10. Erros comuns -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-title">10. Erros Comuns e Cuidados</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="background:var(--red-dim);border:1px solid rgba(244,63,94,0.25);border-radius:7px;padding:12px 14px">
+        <div style="font-weight:700;color:var(--red);margin-bottom:4px">❌ Confundir Cp com Cpk</div>
+        <div style="font-size:14px;color:var(--text-muted);line-height:1.6">Reportar apenas o Cp é otimista demais se o processo não estiver centralizado. Sempre reporte ambos e explique a diferença.</div>
+      </div>
+      <div style="background:var(--red-dim);border:1px solid rgba(244,63,94,0.25);border-radius:7px;padding:12px 14px">
+        <div style="font-weight:700;color:var(--red);margin-bottom:4px">❌ Amostras pequenas (n &lt; 20)</div>
+        <div style="font-size:14px;color:var(--text-muted);line-height:1.6">Com poucos dados, σ estimado tem grande incerteza. Os índices Cp/Cpk calculados não são confiáveis. Use n ≥ 25–30 para análises de capacidade robustas; n ≥ 100 para avaliações formais.</div>
+      </div>
+      <div style="background:var(--red-dim);border:1px solid rgba(244,63,94,0.25);border-radius:7px;padding:12px 14px">
+        <div style="font-weight:700;color:var(--red);margin-bottom:4px">❌ Assumir normalidade sem verificar</div>
+        <div style="font-size:14px;color:var(--text-muted);line-height:1.6">Os índices Cp e Cpk pressupõem distribuição normal. Processos com distribuições assimétricas ou multimodais exigem análises alternativas (índices não-paramétricos ou transformações).</div>
+      </div>
+      <div style="background:var(--red-dim);border:1px solid rgba(244,63,94,0.25);border-radius:7px;padding:12px 14px">
+        <div style="font-weight:700;color:var(--red);margin-bottom:4px">❌ Processo fora de controle estatístico</div>
+        <div style="font-size:14px;color:var(--text-muted);line-height:1.6">Capacidade só faz sentido em um processo estável (sob controle estatístico). Calcular Cp/Cpk de um processo instável produz resultados sem significado. Primeiro estabilize com carta de controle, depois analise a capacidade.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
